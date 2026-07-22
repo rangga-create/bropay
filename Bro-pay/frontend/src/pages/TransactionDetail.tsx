@@ -22,10 +22,9 @@ const TransactionDetail: React.FC = () => {
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
-        const data = await api.dashboard.get();
-        const tx = data.transactions.find((t: Transaction) => t.id === parseInt(id || ''));
-        if (tx) {
-          setTransaction({ ...tx, status: 'completed' });
+        const data = await api.transactions.get(Number(id));
+        if (data.transaction) {
+          setTransaction({ ...data.transaction, status: data.transaction.status || 'completed' });
         }
       } catch (_err) {
         console.error('Failed to fetch transaction');

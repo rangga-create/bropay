@@ -31,7 +31,7 @@ const Transactions: React.FC = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const data = await api.dashboard.get();
+        const data = await api.transactions.list({ search, type: typeFilter === 'all' ? undefined : typeFilter, sort: sortBy, page: currentPage, limit: itemsPerPage });
         setAllTransactions(data.transactions);
       } catch (_err) {
         console.error('Failed to fetch transactions');
@@ -40,7 +40,7 @@ const Transactions: React.FC = () => {
       }
     };
     fetchTransactions();
-  }, []);
+  }, [search, typeFilter, sortBy, currentPage]);
 
   useEffect(() => {
     let result = [...allTransactions];

@@ -205,6 +205,40 @@ input:checked + .slider:before {
   color: var(--text-tertiary);
 }
 
+.currency-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 16px 32px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.currency-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-color);
+}
+
+.currency-option:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.currency-option.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
 @media (max-width: 640px) {
   .theme-options {
     grid-template-columns: 1fr;

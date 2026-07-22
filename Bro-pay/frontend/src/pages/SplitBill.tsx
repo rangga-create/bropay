@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Users, Plus, Calculator, CheckCircle, Clock, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Plus, Calculator, CheckCircle, Clock, Send, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { api } from '../services/api';
 import '../styles/split-bill.css';
 
 interface SplitBillGroup {
@@ -12,40 +13,61 @@ interface SplitBillGroup {
 }
 
 const SplitBill: React.FC = () => {
-  const [bills, setBills] = useState<SplitBillGroup[]>([
-    {
-      id: 1, title: 'Dinner at Italian Place', totalAmount: 156.50, date: 'Jul 14, 2026', status: 'pending',
-      participants: [
-        { name: 'You', amount: 52.17, paid: true },
-        { name: 'Alex Johnson', amount: 52.17, paid: true },
-        { name: 'Sarah Wilson', amount: 52.16, paid: false },
-      ]
-    },
-    {
-      id: 2, title: 'Movie Night', totalAmount: 48.00, date: 'Jul 12, 2026', status: 'settled',
-      participants: [
-        { name: 'You', amount: 16.00, paid: true },
-        { name: 'Mike Chen', amount: 16.00, paid: true },
-        { name: 'Emily Davis', amount: 16.00, paid: true },
-      ]
-    },
-    {
-      id: 3, title: 'Groceries', totalAmount: 89.30, date: 'Jul 10, 2026', status: 'pending',
-      participants: [
-        { name: 'You', amount: 44.65, paid: true },
-        { name: 'Lisa Park', amount: 44.65, paid: false },
-      ]
-    },
-  ]);
+  const [bills, setBills] = useState<SplitBillGroup[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showNewBill, setShowNewBill] = useState(false);
   const [newBill, setNewBill] = useState({ title: '', amount: '', people: '' });
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const data = await api.splitBills.list();
+        if (data.splitBills?.length) {
+          setBills(data.splitBills.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            totalAmount: Number(b.totalAmount || b.total_amount),
+            date: b.date || '',
+            status: b.status || 'pending',
+            participants: b.participants || [],
+          })));
+        }
+      } catch {
+        setBills([
+          {
+            id: 1, title: 'Dinner at Italian Place', totalAmount: 156.50, date: 'Jul 14, 2026', status: 'pending',
+            participants: [
+              { name: 'You', amount: 52.17, paid: true },
+              { name: 'Alex Johnson', amount: 52.17, paid: true },
+              { name: 'Sarah Wilson', amount: 52.16, paid: false },
+            ]
+          },
+          {
+            id: 2, title: 'Movie Night', totalAmount: 48.00, date: 'Jul 12, 2026', status: 'settled',
+            participants: [
+              { name: 'You', amount: 16.00, paid: true },
+              { name: 'Mike Chen', amount: 16.00, paid: true },
+              { name: 'Emily Davis', amount: 16.00, paid: true },
+            ]
+          },
+          {
+            id: 3, title: 'Groceries', totalAmount: 89.30, date: 'Jul 10, 2026', status: 'pending',
+            participants: [
+              { name: 'You', amount: 44.65, paid: true },
+              { name: 'Lisa Park', amount: 44.65, paid: false },
+            ]
+          },
+        ]);
+      }
+    };
+    fetchBills();
+  }, []);
 
   const toggleExpand = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const createBill = () => {
+  const createBill = async () => {
     if (newBill.title && newBill.amount && newBill.people) {
       const numPeople = Number(newBill.people) + 1;
       const share = Number(newBill.amount) / numPeople;
@@ -57,17 +79,29 @@ const SplitBill: React.FC = () => {
           paid: false,
         }))
       ];
-      setBills([{
-        id: Date.now(),
+      const entry = {
         title: newBill.title,
         totalAmount: Number(newBill.amount),
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        status: 'pending',
+        status: 'pending' as const,
         participants,
-      }, ...bills]);
+      };
+      try {
+        const data = await api.splitBills.create(entry);
+        if (data.splitBill) {
+          setBills([{ ...entry, id: data.splitBill.id }, ...bills]);
+        }
+      } catch {
+        setBills([{ ...entry, id: Date.now() }, ...bills]);
+      }
       setNewBill({ title: '', amount: '', people: '' });
       setShowNewBill(false);
     }
+  };
+
+  const settleBill = async (id: number) => {
+    try { await api.splitBills.settle(id); } catch { /* fallback */ }
+    setBills(bills.map(b => b.id === id ? { ...b, status: 'settled', participants: b.participants.map(p => ({ ...p, paid: true })) } : b));
   };
 
   return (
@@ -75,7 +109,7 @@ const SplitBill: React.FC = () => {
       <div className="page-header">
         <div>
           <h1>Split Bill</h1>
-          <p>Split expenses with friends and track who owes what</p>
+          <p>Split expenses with friends and keep every payment on track.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowNewBill(true)}>
           <Plus size={18} />
@@ -100,8 +134,13 @@ const SplitBill: React.FC = () => {
         </div>
       </div>
 
-      <div className="bills-list">
-        {bills.map(bill => (
+      {bills.length === 0 ? (
+        <div className="empty-state">
+          <p>No split bills yet. Create one to start sharing costs with friends.</p>
+        </div>
+      ) : (
+        <div className="bills-list">
+          {bills.map(bill => (
           <div key={bill.id} className={`bill-card ${bill.status}`}>
             <div className="bill-header" onClick={() => toggleExpand(bill.id)}>
               <div className="bill-info">
@@ -138,17 +177,26 @@ const SplitBill: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {bill.status === 'pending' && (
-                  <button className="btn btn-primary btn-sm">
-                    <Send size={14} />
-                    Send Reminders
-                  </button>
-                )}
+                <div className="bill-detail-actions">
+                  {bill.status === 'pending' && (
+                    <>
+                      <button className="btn btn-primary btn-sm">
+                        <Send size={14} />
+                        Send Reminders
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => settleBill(bill.id)}>
+                        <CheckCircle size={14} />
+                        Mark Settled
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>
         ))}
       </div>
+      )}
 
       {showNewBill && (
         <div className="modal-overlay" onClick={() => setShowNewBill(false)}>

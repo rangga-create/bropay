@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { api } from '../services/api';
-import Modal from '../components/ui/Modal';
 import '../styles/transfer.css';
 
 const Transfer: React.FC = () => {
@@ -15,11 +14,18 @@ const Transfer: React.FC = () => {
   const [error, setError] = useState('');
 
   const handleNext = () => {
+    setError('');
     if (step === 'recipient') {
-      if (!recipient.trim()) return;
+      if (!recipient.trim()) {
+        setError('Enter a recipient name or email to continue.');
+        return;
+      }
       setStep('amount');
     } else if (step === 'amount') {
-      if (!amount || parseFloat(amount) <= 0) return;
+      if (!amount || parseFloat(amount) <= 0) {
+        setError('Enter an amount greater than zero.');
+        return;
+      }
       setStep('review');
     }
   };
@@ -31,6 +37,7 @@ const Transfer: React.FC = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
+    setError('');
     try {
       await api.transactions.create({
         name: recipient,
@@ -53,6 +60,8 @@ const Transfer: React.FC = () => {
     setNote('');
     setError('');
   };
+
+  const amountValue = parseFloat(amount) || 0;
 
   return (
     <div className="transfer-page">
@@ -86,6 +95,7 @@ const Transfer: React.FC = () => {
           {step === 'recipient' && (
             <div className="transfer-form">
               <h3>Who are you sending to?</h3>
+              {error && <p className="form-error">{error}</p>}
               <div className="input-group">
                 <label>Recipient Name or Email</label>
                 <input 
@@ -105,6 +115,7 @@ const Transfer: React.FC = () => {
           {step === 'amount' && (
             <div className="transfer-form">
               <h3>How much?</h3>
+              {error && <p className="form-error">{error}</p>}
               <div className="amount-input-wrapper">
                 <span className="currency-symbol">$</span>
                 <input 
@@ -159,7 +170,7 @@ const Transfer: React.FC = () => {
               </div>
               <div className="btn-group">
                 <button className="btn-secondary" onClick={handleBack}>Back</button>
-                <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+                <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
                   {loading ? 'Processing...' : 'Confirm & Send'}
                 </button>
               </div>

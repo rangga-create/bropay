@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Wallet } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+import { api } from '../services/api';
 import '../styles/auth.css';
 
 const Login: React.FC = () => {
@@ -16,23 +19,21 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
+      const token = await credentials.user.getIdToken();
+      const data = await api.auth.login({ idToken: token });
+
+      if (data.success) {
         localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('token', token);
         navigate('/dashboard');
       } else {
         setError(data.message || 'Login failed');
       }
-    } catch (_err) {
-      setError('Cannot connect to the server');
+    } catch (err: any) {
+      setError(err.message || 'Cannot connect to the server');
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,40 @@
-.split-page { animation: fadeIn 0.3s ease-out; }
+.split-page { animation: fadeIn 0.3s ease-out; padding-bottom: 48px; }
 
 .split-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+}
+
+.split-stats .stat-card {
+  align-items: flex-start;
+}
+
+.split-stats .stat-card .stat-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.split-stats .stat-card .stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 6px;
+}
+
+.empty-state {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-xl);
+  padding: 36px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 15px;
 }
 
 .split-stats .stat-card {
@@ -75,6 +105,14 @@
 
 .bill-details {
   padding: 0 24px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.bill-detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-color);
 }
 

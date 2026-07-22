@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Activity as ActivityIcon, LogIn, ArrowDownLeft, ArrowUpRight, Settings, Clock } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
+import { api } from '../services/api';
 import '../styles/activity.css';
 
 interface ActivityItem {
@@ -17,17 +18,25 @@ const Activity: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // TODO: Fetch activity from backend when endpoint is available
-    setTimeout(() => {
-      setActivities([
-        { id: '1', type: 'transfer_in', title: 'Received Payment', description: 'Received $500.00 from Freelance Client', time: 'Today, 10:30 AM' },
-        { id: '2', type: 'login', title: 'Login Successful', description: 'Logged in from Chrome on Windows', time: 'Today, 09:15 AM', ip: '192.168.1.1' },
-        { id: '3', type: 'transfer_out', title: 'Sent Payment', description: 'Sent $50.00 to Netflix Subscription', time: 'Yesterday, 02:00 PM' },
-        { id: '4', type: 'settings', title: 'Profile Updated', description: 'Changed phone number', time: 'May 10, 11:45 AM' },
-        { id: '5', type: 'system', title: 'Account Verified', description: 'Your account has been fully verified', time: 'May 09, 10:00 AM' },
-      ]);
-      setLoading(false);
-    }, 1000);
+    const fetchActivities = async () => {
+      try {
+        const data = await api.activity.list();
+        setActivities((data.activities || []).map((item: any) => ({
+          id: String(item.id),
+          type: item.type || 'system',
+          title: item.title,
+          description: item.description,
+          time: item.time,
+          ip: item.ip,
+        })));
+      } catch (_err) {
+        console.error('Failed to fetch activity');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
   }, []);
 
   const getIcon = (type: string) => {

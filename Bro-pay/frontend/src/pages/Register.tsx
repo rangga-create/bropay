@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+import { api } from '../services/api';
 import '../styles/auth.css';
 
 const Register: React.FC = () => {
@@ -43,19 +46,23 @@ const Register: React.FC = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        navigate('/login');
+      const data = await api.auth.register({ name, email, password });
+      if (data.success) {
+        const credentials = await signInWithEmailAndPassword(auth, email, password);
+        const token = await credentials.user.getIdToken();
+        const loginResponse = await api.auth.login({ idToken: token });
+        if (loginResponse.success) {
+          localStorage.setItem('user', JSON.stringify(loginResponse.user));
+          localStorage.setItem('token', token);
+          navigate('/dashboard');
+        } else {
+          navigate('/login');
+        }
       } else {
         setError(data.message || 'Registration failed');
       }
-    } catch (_err) {
-      setError('Cannot connect to the server');
+    } catch (err: any) {
+      setError(err.message || 'Cannot connect to the server');
     } finally {
       setLoading(false);
     }

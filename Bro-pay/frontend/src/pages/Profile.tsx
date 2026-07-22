@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Mail, Phone, Lock, Edit2, Save, X } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, storage } from '../firebase';
+import { api } from '../services/api';
 import '../styles/profile.css';
 
 interface UserProfile {
@@ -20,6 +23,7 @@ const Profile: React.FC = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(profile);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -42,10 +46,40 @@ const Profile: React.FC = () => {
     }
   }, []);
 
-  const handleSave = () => {
-    setProfile(editData);
-    localStorage.setItem('user', JSON.stringify({ name: editData.name, email: editData.email }));
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const response = await api.auth.updateProfile({ name: editData.name, email: editData.email, phone: editData.phone, avatar: editData.avatar });
+      if (response.success) {
+        setProfile({ ...profile, ...response.user, phone: response.user.phone || editData.phone });
+        setEditData({ ...editData, ...response.user });
+        localStorage.setItem('user', JSON.stringify({ ...response.user }));
+      }
+    } catch (_err) {
+      console.error('Failed to update profile');
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const uid = auth.currentUser?.uid || JSON.parse(localStorage.getItem('user') || '{}').uid;
+      const storageRef = ref(storage, `avatars/${uid}/${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setProfile((prev) => ({ ...prev, avatar: url }));
+      setEditData((prev) => ({ ...prev, avatar: url }));
+      localStorage.setItem('user', JSON.stringify({ ...profile, avatar: url }));
+      await api.auth.updateProfile({ avatar: url });
+    } catch (err) {
+      console.error('Failed to upload avatar', err);
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -76,12 +110,17 @@ const Profile: React.FC = () => {
       <div className="profile-layout">
         <div className="profile-card avatar-card">
           <div className="avatar-large">
-            <span>{profile.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</span>
+            {profile.avatar ? (
+              <img src={profile.avatar} alt="avatar" className="avatar-image" />
+            ) : (
+              <span>{profile.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}</span>
+            )}
             <label className="avatar-upload">
               <Camera size={16} />
-              <input type="file" accept="image/*" className="hidden" />
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             </label>
           </div>
+          {avatarUploading && <p className="upload-status">Uploading avatar...</p>}
           <h2>{profile.name}</h2>
           <p className="email-text">{profile.email}</p>
           <p className="member-since">Member since {profile.memberSince}</p>

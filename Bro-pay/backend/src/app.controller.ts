@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
+import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard';
 
 @Controller()
 export class AppController {
@@ -10,23 +11,9 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Post('auth/register')
-  register(@Body() body: any) {
-    return this.appService.register(body);
-  }
-
-  @Post('auth/login')
-  login(@Body() body: any) {
-    return this.appService.login(body);
-  }
-
   @Get('dashboard')
-  getDashboard() {
-    return this.appService.getDashboard();
-  }
-
-  @Post('transactions')
-  createTransaction(@Body() body: any) {
-    return this.appService.createTransaction(body);
+  @UseGuards(FirebaseAuthGuard)
+  getDashboard(@Req() req: any) {
+    return this.appService.getDashboard(req.user.uid);
   }
 }

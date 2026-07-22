@@ -10,20 +10,19 @@ import '../styles/analytics.css';
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 const Analytics: React.FC = () => {
-  const [balance] = useState<number>(0);
-  const [income] = useState<number>(0);
-  const [expense] = useState<number>(0);
+  const [balance, setBalance] = useState<number>(0);
+  const [income, setIncome] = useState<number>(0);
+  const [expense, setExpense] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<string>('month');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await api.dashboard.get();
-        if (data) {
-          // Use the fetched data for analytics
-          void data;
-        }
+        const data = await api.analytics.summary(timeRange);
+        setBalance(data.balance || 0);
+        setIncome(data.income || 0);
+        setExpense(data.expense || 0);
       } catch (_err) {
         console.error('Failed to fetch analytics data');
       } finally {
@@ -31,7 +30,7 @@ const Analytics: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [timeRange]);
 
   const spendingByCategory = [
     { name: 'Food & Dining', value: 450, color: '#2563EB' },

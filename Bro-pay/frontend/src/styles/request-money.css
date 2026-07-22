@@ -1,4 +1,4 @@
-.request-page { animation: fadeIn 0.3s ease-out; }
+.request-page { animation: fadeIn 0.3s ease-out; padding-bottom: 48px; }
 
 .request-stats {
   display: grid;
@@ -27,12 +27,27 @@
 }
 
 .request-stats .stat-icon.pending { background: var(--warning-light); color: var(--warning); }
-.request-stats .stat-icon.amount { background: var(--primary-light); color: var(--primary); }
+.request-stats .stat-icon.pending-amount { background: var(--primary-light); color: var(--primary); }
+.request-stats .stat-icon.amount { background: var(--success-light); color: var(--success); }
 
 .requests-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.empty-state {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-xl);
+  padding: 36px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 15px;
 }
 
 .request-card {
@@ -89,6 +104,84 @@
 .status-badge.pending { background: var(--warning-light); color: var(--warning); }
 .status-badge.accepted { background: var(--success-light); color: var(--success); }
 .status-badge.declined { background: var(--danger-light); color: var(--danger); }
+
+.request-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.action-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.action-btn-sm.accept {
+  background: var(--success-light);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.action-btn-sm.accept:hover {
+  background: var(--success);
+  color: white;
+}
+
+.action-btn-sm.decline {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.action-btn-sm.decline:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.action-btn-sm.delete {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.action-btn-sm.delete:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 4px;
+}
 
 @media (max-width: 768px) {
   .request-stats { grid-template-columns: 1fr; }
